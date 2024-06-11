@@ -1,7 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { it, expect, describe } from "vitest";
+import { render, screen } from '@testing-library/react'
 import Greet from "../../src/components/Greet";
-import "@testing-library/jest-dom/vitest";
 
 describe("group", () => {
   it("如果提供参数name 应该渲染hello和name", () => {
