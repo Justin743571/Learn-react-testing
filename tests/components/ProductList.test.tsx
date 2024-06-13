@@ -8,6 +8,7 @@ import { server } from "../mocks/server";
 import { http, HttpResponse, delay } from "msw";
 import { db } from "../mocks/db";
 import { QueryClient, QueryClientProvider } from "react-query";
+import AllProviders from "../AllProviders";
 
 describe("ProductList", () => {
   const productIds: number[] = [];
@@ -21,25 +22,8 @@ describe("ProductList", () => {
     db.product.deleteMany({ where: { id: { in: productIds } } });
   });
 
-  const renderProductList = () => {
-    const client = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
-    render(
-      <>
-        <QueryClientProvider client={client}>
-          <ProductList />
-        </QueryClientProvider>
-      </>
-    );
-  };
-
   it("应呈现产品列表", async () => {
-    renderProductList()
+    render(<ProductList />, { wrapper: AllProviders });
     const items = await screen.findAllByRole("listitem");
     expect(items.length).toBeGreaterThan(0);
   });
@@ -47,7 +31,7 @@ describe("ProductList", () => {
   it("如果没有产品 应呈现no products", async () => {
     server.use(http.get("/products", () => HttpResponse.json([])));
 
-    renderProductList()
+    render(<ProductList />, { wrapper: AllProviders });
     const message = await screen.findByText(/no products/i);
     expect(message).toBeInTheDocument();
   });
@@ -55,7 +39,7 @@ describe("ProductList", () => {
   it("出现错误时，应呈现错误信息", async () => {
     server.use(http.get("/products", () => HttpResponse.error()));
 
-    renderProductList()
+    render(<ProductList />, { wrapper: AllProviders });
     expect(await screen.findByText(/error/i)).toBeInTheDocument();
   });
 
@@ -67,13 +51,13 @@ describe("ProductList", () => {
       })
     );
 
-    renderProductList()
+    render(<ProductList />, { wrapper: AllProviders });
 
     expect(await screen.findByText(/loading/i)).toBeInTheDocument();
   });
 
   it("在获取完数据 应呈现去除loading文本", async () => {
-    renderProductList()
+    render(<ProductList />, { wrapper: AllProviders });
 
     await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
   });
@@ -81,7 +65,7 @@ describe("ProductList", () => {
   it("在获取完数据出现错误 应呈现去除loading文本", async () => {
     server.use(http.get("/products", () => HttpResponse.error()));
 
-    renderProductList()
+    render(<ProductList />, { wrapper: AllProviders });
 
     await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
   });
