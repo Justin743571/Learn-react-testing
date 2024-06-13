@@ -32,4 +32,11 @@ describe("ProductDetail", () => {
 
     expect(await screen.findByText(/invalid/i)).toBeInTheDocument();
   });
+
+  it('如果出现错误 应呈现错误信息', async() => {
+    server.use(http.get("products/"+productId, () => HttpResponse.error()));
+    render(<ProductDetail productId={productId} />);
+
+    expect(await screen.findByText(/error/i)).toBeInTheDocument();
+  })
 });
