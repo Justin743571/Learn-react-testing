@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitForElementToBeRemoved } from "@testing-library/react";
 import ProductList from "../../src/components/ProductList";
 import { server } from "../mocks/server";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse,delay } from "msw";
 import { db } from "../mocks/db";
 
 describe("ProductList", () => {
@@ -29,10 +29,35 @@ describe("ProductList", () => {
     const message = await screen.findByText(/no products/i);
     expect(message).toBeInTheDocument();
   });
+  
   it("出现错误时，应呈现错误信息", async () => {
     server.use(http.get("/products", () => HttpResponse.error()));
 
     render(<ProductList />);
     expect(await screen.findByText(/error/i)).toBeInTheDocument();
   });
+
+  it('如果在获取数据时 应呈现loading文本', async() => {
+    server.use(http.get("/products", async() => {
+      await delay()
+      return HttpResponse.json([])}));
+
+      render(<ProductList />);
+
+  expect(await screen.findByText(/loading/i)).toBeInTheDocument();
+  })
+
+  it('在获取完数据 应呈现去除loading文本', async() => {
+    render(<ProductList/>)
+    
+    await waitForElementToBeRemoved(() => screen.queryByText(/loading/i))
+  })
+
+  it('在获取完数据出现错误 应呈现去除loading文本', async() => {
+    server.use(http.get("/products", () => HttpResponse.error()));
+    
+    render(<ProductList/>)
+
+    await waitForElementToBeRemoved(() => screen.queryByText(/loading/i))
+  })
 });
