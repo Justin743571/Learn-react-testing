@@ -21,12 +21,18 @@ describe("ProductList", () => {
     const items = await screen.findAllByRole("listitem");
     expect(items.length).toBeGreaterThan(0);
   });
-  
-  it("如果没有产品 应呈现no products", async() => {
+
+  it("如果没有产品 应呈现no products", async () => {
     server.use(http.get("/products", () => HttpResponse.json([])));
 
     render(<ProductList />);
-    const message = await screen.findByText(/no products/i)
+    const message = await screen.findByText(/no products/i);
     expect(message).toBeInTheDocument();
+  });
+  it("出现错误时，应呈现错误信息", async () => {
+    server.use(http.get("/products", () => HttpResponse.error()));
+
+    render(<ProductList />);
+    expect(await screen.findByText(/error/i)).toBeInTheDocument();
   });
 });
