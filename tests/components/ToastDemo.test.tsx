@@ -8,7 +8,7 @@ describe("ToastDemo", () => {
     render(
       <>
         <ToastDemo />
-        <Toaster />
+        <Toaster/>
       </>
     );
     const button = screen.getByRole('button');
