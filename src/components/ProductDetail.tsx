@@ -8,9 +8,9 @@ const ProductDetail = ({ productId }: { productId: number }) => {
     error,
     isLoading,
   } = useQuery<Product, Error>({
-    queryKey: ["product", productId],
+    queryKey: ["products", productId],
     queryFn: () =>
-      axios.get<Product>("/products" + productId).then((res) => res.data),
+      axios.get<Product>("/products/" + productId).then((res) => res.data),
   });
 
   if (!productId) return <div>Invaild productId</div>

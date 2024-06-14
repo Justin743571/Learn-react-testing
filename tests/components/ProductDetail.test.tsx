@@ -41,7 +41,7 @@ describe("ProductDetail", () => {
   it("如果接收一个无效productId 应该呈现error", async () => {
     render(<ProductDetail productId={0} />,{wrapper:AllProviders});
 
-    expect(await screen.findByText(/invalid/i)).toBeInTheDocument();
+    expect(await screen.findByText(/invaild/i)).toBeInTheDocument();
   });
 
   it("如果出现错误 应呈现错误信息", async () => {
