@@ -62,4 +62,31 @@ describe("BrowseProductsPage", () => {
       screen.queryByRole("progressbar", { name: /products/i })
     );
   });
+
+  it("如果在获取categories数据失败 不应呈现categories的东西", async () => {
+    server.use(http.get("/categories", () => HttpResponse.error()));
+
+    renderBrowseProducts();
+
+    await waitForElementToBeRemoved(() =>
+      screen.queryByRole("progressbar", { name: /categories/i })
+    );
+
+    expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("combobox", { name: /category/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("如果在获取product数据失败 不应呈现product的东西", async () => {
+    server.use(http.get("/products", () => HttpResponse.error()));
+
+    renderBrowseProducts();
+
+    await waitForElementToBeRemoved(() =>
+      screen.queryByRole("progressbar", { name: /products/i })
+    );
+
+    expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+  });
 });
