@@ -16,8 +16,11 @@ describe("BrowseProductsPage", () => {
   const products: Product[] = [];
   beforeAll(() => {
     [1, 2].forEach((item) => {
-      categories.push(db.category.create({ name: "Category" + item }));
-      products.push(db.product.create());
+      const category = db.category.create({ name: "Category" + item });
+      categories.push(category);
+      [1, 2].forEach(() => {
+        products.push(db.product.create({ categoryId: category.id }));
+      });
     });
   });
   afterAll(() => {
@@ -123,5 +126,57 @@ describe("BrowseProductsPage", () => {
     products.forEach((product) => {
       expect(screen.getByText(product.name)).toBeInTheDocument();
     });
+  });
+
+  it("应按类别过滤产品", async () => {
+    const { getCategoriesComboBox, getCategoriesSkeleton } =
+      renderBrowseProducts();
+
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
+
+    const combobox = getCategoriesComboBox();
+    const user = userEvent.setup();
+    await user.click(combobox!);
+
+    const selectedCategory = categories[0];
+    const option = screen.getByRole("option", { name: selectedCategory.name });
+    await user.click(option);
+
+    const products = db.product.findMany({
+      where: {
+        categoryId: { equals: selectedCategory.id },
+      },
+    });
+
+    const rows = screen.getAllByRole("row");
+    const dataRows = rows.slice(1);
+    expect(dataRows).toHaveLength(products.length);
+
+    products.forEach(product =>{
+      expect(screen.getByText(product.name)).toBeInTheDocument();
+    })
+  });
+
+  it("应呈现所有products 当点击All时", async () => {
+    const { getCategoriesComboBox, getCategoriesSkeleton } =
+      renderBrowseProducts();
+
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
+
+    const combobox = getCategoriesComboBox();
+    const user = userEvent.setup();
+    await user.click(combobox!);
+
+    const option = screen.getByRole("option", { name: /all/i });
+    await user.click(option);
+
+    const products = db.product.getAll();
+    const rows = screen.getAllByRole("row");
+    const dataRows = rows.slice(1);
+    expect(dataRows).toHaveLength(products.length);
+
+    products.forEach(product =>{
+      expect(screen.getByText(product.name)).toBeInTheDocument();
+    })
   });
 });

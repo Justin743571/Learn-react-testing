@@ -15,4 +15,5 @@ describe("ProductImageGallery", () => {
         expect(images[index]).toHaveAttribute("src",url)
     })
   });
+  
 });
