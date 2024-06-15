@@ -6,7 +6,7 @@ import {
 import BrowseProducts from "../../src/pages/BrowseProductsPage";
 import { Theme } from "@radix-ui/themes";
 import userEvent from "@testing-library/user-event";
-import { db } from "../mocks/db";
+import { db, getProductsByCategory } from "../mocks/db";
 import { Category, Product } from "../../src/entities";
 import { CartProvider } from "../../src/providers/CartProvider";
 import { simulateDelay, simulateError } from "../utils";
@@ -30,22 +30,6 @@ describe("BrowseProductsPage", () => {
     const productId = products.map((p) => p.id);
     db.product.deleteMany({ where: { id: { in: productId } } });
   });
-  const renderBrowseProducts = () => {
-    render(
-      <CartProvider>
-        <Theme>
-          <BrowseProducts />
-        </Theme>
-      </CartProvider>
-    );
-    return {
-      getProductsSkeleton: () =>
-        screen.queryByRole("progressbar", { name: /products/i }),
-      getCategoriesSkeleton: () =>
-        screen.queryByRole("progressbar", { name: /categories/i }),
-      getCategoriesComboBox: () => screen.queryByRole("combobox"),
-    };
-  };
 
   it("如果正在获取Categories数据 应呈现加载骨架", () => {
     simulateDelay("/categories");
@@ -129,54 +113,68 @@ describe("BrowseProductsPage", () => {
   });
 
   it("应按类别过滤产品", async () => {
-    const { getCategoriesComboBox, getCategoriesSkeleton } =
+    const { selectCategory, expectProductsToBeInTheDocument } =
       renderBrowseProducts();
 
-    await waitForElementToBeRemoved(getCategoriesSkeleton);
-
-    const combobox = getCategoriesComboBox();
-    const user = userEvent.setup();
-    await user.click(combobox!);
-
     const selectedCategory = categories[0];
-    const option = screen.getByRole("option", { name: selectedCategory.name });
-    await user.click(option);
+    await selectCategory(selectedCategory.name);
 
-    const products = db.product.findMany({
-      where: {
-        categoryId: { equals: selectedCategory.id },
-      },
-    });
-
-    const rows = screen.getAllByRole("row");
-    const dataRows = rows.slice(1);
-    expect(dataRows).toHaveLength(products.length);
-
-    products.forEach(product =>{
-      expect(screen.getByText(product.name)).toBeInTheDocument();
-    })
+    const products = getProductsByCategory(selectedCategory.id);
+    expectProductsToBeInTheDocument(products);
   });
 
   it("应呈现所有products 当点击All时", async () => {
-    const { getCategoriesComboBox, getCategoriesSkeleton } =
+    const { selectCategory, expectProductsToBeInTheDocument } =
       renderBrowseProducts();
 
-    await waitForElementToBeRemoved(getCategoriesSkeleton);
+    await selectCategory(/all/i);
 
+    const products = db.product.getAll();
+    expectProductsToBeInTheDocument(products);
+  });
+});
+
+const renderBrowseProducts = () => {
+  render(
+    <CartProvider>
+      <Theme>
+        <BrowseProducts />
+      </Theme>
+    </CartProvider>
+  );
+  const getProductsSkeleton = () =>
+    screen.queryByRole("progressbar", { name: /products/i });
+
+  const getCategoriesSkeleton = () =>
+    screen.queryByRole("progressbar", { name: /categories/i });
+
+  const getCategoriesComboBox = () => screen.queryByRole("combobox");
+
+  const selectCategory = async (name: RegExp | string) => {
+    await waitForElementToBeRemoved(getCategoriesSkeleton);
     const combobox = getCategoriesComboBox();
     const user = userEvent.setup();
     await user.click(combobox!);
-
-    const option = screen.getByRole("option", { name: /all/i });
+    const option = screen.getByRole("option", {
+      name,
+    });
     await user.click(option);
+  };
 
-    const products = db.product.getAll();
+  const expectProductsToBeInTheDocument = (products: Product[]) => {
     const rows = screen.getAllByRole("row");
     const dataRows = rows.slice(1);
     expect(dataRows).toHaveLength(products.length);
-
-    products.forEach(product =>{
+    products.forEach((product) => {
       expect(screen.getByText(product.name)).toBeInTheDocument();
-    })
-  });
-});
+    });
+  };
+
+  return {
+    getProductsSkeleton,
+    getCategoriesSkeleton,
+    getCategoriesComboBox,
+    selectCategory,
+    expectProductsToBeInTheDocument,
+  };
+};
