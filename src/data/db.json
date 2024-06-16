@@ -393,10 +393,16 @@
       "id": 63
     },
     {
+      "id": 64,
       "name": "milk",
       "price": 10,
-      "categoryId": 3,
-      "id": 64
+      "categoryId": 3
+    },
+    {
+      "id": 65,
+      "name": "milk",
+      "price": 10,
+      "categoryId": 3
     }
   ]
 }
