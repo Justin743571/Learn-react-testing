@@ -12,18 +12,35 @@ describe("ProductForm", () => {
   afterAll(() => {
     db.category.delete({ where: { id: { equals: category.id } } });
   });
+
+  const renderComponent = (product?: Product) => {
+    render(<ProductForm product={product} onSubmit={vi.fn()} />, {
+      wrapper: AllProviders,
+    });
+
+    return {
+      waitforFormToLoad: () => screen.findByRole("form"),
+      getInputs: () => {
+        return {
+          nameInput: screen.getByPlaceholderText(/name/i),
+          priceInput: screen.getByPlaceholderText(/price/i),
+          categoryInput: screen.getByRole("combobox", { name: /category/i }),
+        };
+      },
+    };
+  };
+
   it("应呈现输入字段", async () => {
-    render(<ProductForm onSubmit={vi.fn()} />, { wrapper: AllProviders });
+    const { waitforFormToLoad, getInputs } = renderComponent();
 
-    await screen.findByRole("form");
+    await waitforFormToLoad();
+    const { nameInput, priceInput, categoryInput } = getInputs();
 
-    expect(screen.getByPlaceholderText(/name/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/price/i)).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("combobox", { name: /category/i })
-    ).toBeInTheDocument();
+    expect(nameInput).toBeInTheDocument();
+    expect(priceInput).toBeInTheDocument();
+    expect(categoryInput).toBeInTheDocument();
   });
+
   it("编辑产品时应填充表单字段", async () => {
     const product: Product = {
       id: 1,
@@ -31,19 +48,13 @@ describe("ProductForm", () => {
       price: 10,
       categoryId: category.id,
     };
-    render(<ProductForm product={product} onSubmit={vi.fn()} />, {
-      wrapper: AllProviders,
-    });
+    const { waitforFormToLoad, getInputs } = renderComponent(product);
 
-    await screen.findByRole("form");
+    await waitforFormToLoad();
+    const { nameInput, priceInput, categoryInput } = getInputs();
 
-    expect(screen.getByPlaceholderText(/name/i)).toHaveValue(product.name);
-    expect(screen.getByPlaceholderText(/price/i)).toHaveValue(
-      product.price.toString()
-    );
-
-    expect(
-      screen.getByRole("combobox", { name: /category/i })
-    ).toHaveTextContent(category.name);
+    expect(nameInput).toHaveValue(product.name);
+    expect(priceInput).toHaveValue(product.price.toString());
+    expect(categoryInput).toHaveTextContent(category.name);
   });
 });
