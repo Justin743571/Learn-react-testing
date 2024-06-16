@@ -10,6 +10,8 @@ import { db, getProductsByCategory } from "../mocks/db";
 import { Category, Product } from "../../src/entities";
 import { CartProvider } from "../../src/providers/CartProvider";
 import { simulateDelay, simulateError } from "../utils";
+import { QueryClientProvider } from "react-query";
+import AllProviders from "../AllProviders";
 
 describe("BrowseProductsPage", () => {
   const categories: Category[] = [];
@@ -135,13 +137,7 @@ describe("BrowseProductsPage", () => {
 });
 
 const renderBrowseProducts = () => {
-  render(
-    <CartProvider>
-      <Theme>
-        <BrowseProducts />
-      </Theme>
-    </CartProvider>
-  );
+  render(<BrowseProducts />, { wrapper: AllProviders });
   const getProductsSkeleton = () =>
     screen.queryByRole("progressbar", { name: /products/i });
 
